@@ -75,13 +75,39 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.setOnMarkerClickListener(clusterManager)
 
         clusterManager.setOnClusterItemClickListener { clusterItem ->
+            val latitudeArray = DoubleArray(1)
+            val longitudeArray = DoubleArray(1)
+
             val markerLocation = clusterItem.position
+            latitudeArray[0] = markerLocation.latitude
+            longitudeArray[0] = markerLocation.longitude
+
             val intent = Intent(this, Gallery::class.java)
-            intent.putExtra("latitude", markerLocation.latitude)
-            intent.putExtra("longitude", markerLocation.longitude)
+            intent.putExtra("latitudeArray", latitudeArray)
+            intent.putExtra("longitudeArray", longitudeArray)
+
             startActivity(intent)
             true
         }
+
+        clusterManager.setOnClusterClickListener { cluster ->
+            val latitudeArray = DoubleArray(cluster.size)
+            val longitudeArray = DoubleArray(cluster.size)
+
+            for ((index, clusterItem) in cluster.items.withIndex()) {
+                val markerLocation = clusterItem.position
+                latitudeArray[index] = markerLocation.latitude
+                longitudeArray[index] = markerLocation.longitude
+            }
+
+            val intent = Intent(this, Gallery::class.java)
+            intent.putExtra("latitudeArray", latitudeArray)
+            intent.putExtra("longitudeArray", longitudeArray)
+
+            startActivity(intent)
+            true
+        }
+
 
         // Retrieve and add the markers to the ClusterManager
         markersList = getAllItem()

@@ -114,26 +114,36 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     @SuppressLint("Range")
-    fun findImagesByLocation(latitude: Double, longitude: Double): Cursor? {
+    fun findImagesByLocation(latitude: DoubleArray, longitude: DoubleArray): Cursor? {
         val db = this.readableDatabase
 
-        // Find the location ID based on the latitude and longitude
-        val locationIdQuery = "SELECT $COLUMN_LOCATION_ID FROM $TABLE_LOCATION WHERE " +
-                "$COLUMN_LOCATION_LATITUDE = $latitude AND $COLUMN_LOCATION_LONGITUDE = $longitude"
-        val locationIdCursor = db.rawQuery(locationIdQuery, null)
-        var locationId: Long? = null
-        if (locationIdCursor != null && locationIdCursor.moveToFirst()) {
-            locationId = locationIdCursor.getLong(locationIdCursor.getColumnIndex(COLUMN_LOCATION_ID))
-            locationIdCursor.close()
+        // Find the location IDs based on the latitude and longitude
+        val locationIds = mutableListOf<Long>()
+        for (i in latitude.indices) {
+            val latitudeValue = latitude[i]
+            val longitudeValue = longitude[i]
+
+            val locationIdQuery = "SELECT $COLUMN_LOCATION_ID FROM $TABLE_LOCATION WHERE " +
+                    "$COLUMN_LOCATION_LATITUDE = $latitudeValue AND $COLUMN_LOCATION_LONGITUDE = $longitudeValue"
+            val locationIdCursor = db.rawQuery(locationIdQuery, null)
+
+            if (locationIdCursor != null && locationIdCursor.moveToFirst()) {
+                val locationId = locationIdCursor.getLong(locationIdCursor.getColumnIndex(COLUMN_LOCATION_ID))
+                locationIds.add(locationId)
+            }
+
+            locationIdCursor?.close()
         }
 
-        if (locationId != null) {
-            // Retrieve the images associated with the location ID
-            val imagesQuery = "SELECT * FROM $TABLE_IMAGES WHERE $COLUMN_IMAGE_LOCATION_ID = $locationId"
+        if (locationIds.isNotEmpty()) {
+            // Retrieve the images associated with the location IDs
+            val locationIdsString = locationIds.joinToString()
+            val imagesQuery = "SELECT * FROM $TABLE_IMAGES WHERE $COLUMN_IMAGE_LOCATION_ID IN ($locationIdsString)"
             return db.rawQuery(imagesQuery, null)
         }
 
         return null
     }
+
 
 }

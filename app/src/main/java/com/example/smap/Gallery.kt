@@ -21,8 +21,8 @@ class Gallery : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 3)
 
-        val latitude = intent.getDoubleExtra("latitude", 0.0)
-        val longitude = intent.getDoubleExtra("longitude", 0.0)
+        val latitude = intent.getDoubleArrayExtra("latitudeArray") ?: doubleArrayOf()
+        val longitude = intent.getDoubleArrayExtra("longitudeArray") ?: doubleArrayOf()
 
         val images = mutableListOf<String>()
         var databaseHelper = DatabaseHelper(this)
