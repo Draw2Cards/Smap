@@ -1,6 +1,7 @@
 package com.example.smap
 
 import ImageAdapter
+import android.database.Cursor
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -21,24 +22,32 @@ class Gallery : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 3)
 
+        val images = mutableListOf<String>()
+        val databaseHelper = DatabaseHelper(this)
+
         val latitude = intent.getDoubleArrayExtra("latitudeArray") ?: doubleArrayOf()
         val longitude = intent.getDoubleArrayExtra("longitudeArray") ?: doubleArrayOf()
 
-        val images = mutableListOf<String>()
-        var databaseHelper = DatabaseHelper(this)
-        val cursor = databaseHelper.findImagesByLocation(latitude, longitude)
-        if (cursor != null)
-        {
+        val cursor: Cursor? = if (latitude.isNotEmpty()) {
+            databaseHelper.findImagesByLocation(latitude, longitude)
+        } else {
+            val from = intent.getLongExtra("from", 0L)
+            val to = intent.getLongExtra("to", 0L)
+            databaseHelper.findImagesByDate(from, to)
+        }
+
+        cursor?.use {
             while (cursor.moveToNext()) {
-                val _id = cursor.getInt(0);
-                val path = cursor.getString(1);
-                val timestamp = cursor.getLong(2);
-                val loc_id = cursor.getInt(3);
+                val _id = cursor.getInt(0)
+                val path = cursor.getString(1)
+                val timestamp = cursor.getLong(2)
+                val loc_id = cursor.getInt(3)
 
                 images.add(path)
                 Log.d("DB", "($_id;$path;$timestamp;$loc_id)")
             }
         }
+
         imageAdapter = ImageAdapter(recyclerView.context, images, recyclerView, false) { isChecked ->
             // This lambda function is called when a checkbox is checked/unchecked
             isLongPressDetected = isChecked

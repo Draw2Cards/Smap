@@ -9,6 +9,7 @@ import android.Manifest;
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Log
@@ -23,8 +24,6 @@ import com.example.smap.databinding.ActivityMapsBinding
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.maps.android.clustering.Cluster
-import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -59,6 +58,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         fabCamera.setOnClickListener {
             openCamera()
         }
+
+        val fabFilter = findViewById<FloatingActionButton>(R.id.fab_filter)
+        fabFilter.setOnClickListener {
+            openFilterActivity()
+        }
+    }
+
+    private fun openFilterActivity() {
+        val intent = Intent(this, FilterActivity::class.java)
+        startActivityForResult(intent, FILTER_REQUEST_CODE)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -108,29 +117,36 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             true
         }
 
-
-        // Retrieve and add the markers to the ClusterManager
         markersList = getAllItem()
         clusterManager.addItems(markersList)
         clusterManager.cluster()
     }
 
-
     private fun getAllItem(): ArrayList<ClusterMarkerItem> {
-        var arrayList:ArrayList<ClusterMarkerItem> = ArrayList()
-        val cursor = databaseHelper.readAllData()
-        if (cursor != null)
-        {
+        val arrayList: ArrayList<ClusterMarkerItem> = ArrayList()
+
+        val from = intent.getLongExtra("from", 0L)
+        val to = intent.getLongExtra("to", 0L)
+
+        val cursor: Cursor? = if (from == 0L) {
+            databaseHelper.readAllData()
+        } else {
+            databaseHelper.getFilteredLocations(from, to)
+        }
+
+        if (cursor != null) {
             while (cursor.moveToNext()) {
-                val _id = cursor.getInt(0);
-                val loc1 = cursor.getDouble(1);
-                val loc2 = cursor.getDouble(2);
-                Log.d("DB", _id.toString() + loc1 + loc2)
+                val loc1 = cursor.getDouble(cursor.getColumnIndex("latitude"))
+                val loc2 = cursor.getDouble(cursor.getColumnIndex("longitude"))
+                Log.d("DB", "$loc1 $loc2")
                 arrayList.add(ClusterMarkerItem(LatLng(loc1, loc2)))
             }
+            cursor.close()
         }
-        return  arrayList
+
+        return arrayList
     }
+
 
     private fun openCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -211,8 +227,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     companion object {
-        private const val REQUEST_IMAGE_CAPTURE = 1
-        private val REQUEST_CAMERA_PERMISSION = 1
+        private const val REQUEST_IMAGE_CAPTURE = 1001
+        private const val FILTER_REQUEST_CODE = 2001
+        private const val REQUEST_CAMERA_PERMISSION = 3001
         }
 
 

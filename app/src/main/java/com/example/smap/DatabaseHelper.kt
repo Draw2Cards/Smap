@@ -144,6 +144,50 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
         return null
     }
+    fun findImagesByDate(from: Long, to: Long): Cursor? {
+        val db = this.readableDatabase
 
+        val countQuery = "SELECT COUNT(*) FROM $TABLE_IMAGES WHERE $COLUMN_IMAGE_TIMESTAMP >= $from AND $COLUMN_IMAGE_TIMESTAMP <= $to"
+        val countCursor = db.rawQuery(countQuery, null)
+        countCursor.moveToFirst()
+        val count = countCursor.getInt(0)
+        countCursor.close()
+
+        val imagesQuery = if (count > 0) {
+            "SELECT * FROM $TABLE_IMAGES WHERE $COLUMN_IMAGE_TIMESTAMP >= $from AND $COLUMN_IMAGE_TIMESTAMP <= $to"
+        } else {
+            "SELECT * FROM $TABLE_IMAGES"
+        }
+        return db.rawQuery(imagesQuery, null)
+    }
+
+    fun getFilteredLocations(from: Long, to: Long): Cursor? {
+        val db = this.readableDatabase
+
+        // Find the images within the given date range
+        val imagesQuery = "SELECT $COLUMN_IMAGE_LOCATION_ID FROM $TABLE_IMAGES WHERE $COLUMN_IMAGE_TIMESTAMP BETWEEN $from AND $to"
+        val imageCursor = db.rawQuery(imagesQuery, null)
+
+        val locationIds = mutableListOf<Long>()
+        if (imageCursor != null && imageCursor.moveToFirst()) {
+            // Retrieve the location IDs associated with the filtered images
+            do {
+                val locationId = imageCursor.getLong(0)
+                locationIds.add(locationId)
+            } while (imageCursor.moveToNext())
+
+            imageCursor.close()
+        }
+
+        if (locationIds.isNotEmpty()) {
+            // Filter the locations based on the retrieved location IDs
+            val locationIdsStr = locationIds.joinToString(",")
+            val locationsQuery = "SELECT * FROM $TABLE_LOCATION WHERE $COLUMN_LOCATION_ID IN ($locationIdsStr)"
+            return db.rawQuery(locationsQuery, null)
+        }
+
+        // Return all locations if no images were found within the date range
+        return db.rawQuery("SELECT * FROM $TABLE_LOCATION", null)
+    }
 
 }
