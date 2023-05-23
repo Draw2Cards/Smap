@@ -23,12 +23,17 @@ import com.example.smap.databinding.ActivityMapsBinding
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.maps.android.clustering.Cluster
+import com.google.maps.android.clustering.ClusterItem
+import com.google.maps.android.clustering.ClusterManager
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
     private lateinit var databaseHelper: DatabaseHelper
+    private lateinit var markersList: ArrayList<ClusterMarkerItem>
+    private lateinit var mapFragment: SupportMapFragment
 
     @SuppressLint("PotentialBehaviorOverride")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,11 +44,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         databaseHelper = DatabaseHelper(this)
 
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
+        mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
 
         val fabLocation = findViewById<FloatingActionButton>(R.id.fab_location)
         fabLocation.setOnClickListener {
@@ -54,35 +59,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         fabCamera.setOnClickListener {
             openCamera()
         }
-
-        val map = (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync { googleMap ->
-            googleMap.setOnMarkerClickListener { marker ->
-                val markerLocation = marker.position
-
-                val intent = Intent(this, Gallery::class.java)
-                intent.putExtra("latitude", markerLocation.latitude)
-                intent.putExtra("longitude", markerLocation.longitude)
-                startActivity(intent)
-                true
-            }
-        }
-
     }
 
-    private fun readData() {
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        setUpClusterManager(mMap)
+        getCurrentLocation(googleMap)
+    }
+
+    private fun setUpClusterManager(mMap: GoogleMap) {
+        val clusterManager = ClusterManager<ClusterMarkerItem>(this, mMap)
+
+        // Set up the ClusterManager as the renderer for the GoogleMap
+        mMap.setOnCameraIdleListener(clusterManager)
+        mMap.setOnMarkerClickListener(clusterManager)
+
+        clusterManager.setOnClusterItemClickListener { clusterItem ->
+            val markerLocation = clusterItem.position
+            val intent = Intent(this, Gallery::class.java)
+            intent.putExtra("latitude", markerLocation.latitude)
+            intent.putExtra("longitude", markerLocation.longitude)
+            startActivity(intent)
+            true
+        }
+
+        // Retrieve and add the markers to the ClusterManager
+        markersList = getAllItem()
+        clusterManager.addItems(markersList)
+        clusterManager.cluster()
+    }
+
+
+    private fun getAllItem(): ArrayList<ClusterMarkerItem> {
+        var arrayList:ArrayList<ClusterMarkerItem> = ArrayList()
         val cursor = databaseHelper.readAllData()
         if (cursor != null)
         {
             while (cursor.moveToNext()) {
                 val _id = cursor.getInt(0);
-                val path = cursor.getString(1);
-                val loc1 = cursor.getFloat(2);
-                val loc2 = cursor.getFloat(3);
-                val timestamp = cursor.getLong(4);
-
-                Log.d("DB", _id.toString() + path + loc1 + loc2 +timestamp)
+                val loc1 = cursor.getDouble(1);
+                val loc2 = cursor.getDouble(2);
+                Log.d("DB", _id.toString() + loc1 + loc2)
+                arrayList.add(ClusterMarkerItem(LatLng(loc1, loc2)))
             }
         }
+        return  arrayList
     }
 
     private fun openCamera() {
@@ -108,8 +129,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val savedImageURL = saveImageToGallery(imageBitmap)
             mMap?.clear()
             addMemoryToDb(savedImageURL)
-            addMarkers()
-
+            setUpClusterManager(mMap)
         }
     }
 
@@ -118,9 +138,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val location = mMap?.myLocation
         if (imageURL != null && location != null) {
             val latitude = location.latitude
-            val longitude = location.longitude
+            val longitude =location.longitude
             val timestamp = System.currentTimeMillis()
-            databaseHelper.addMemory(imageURL, latitude, longitude, timestamp)
+            databaseHelper.addMemory(imageURL, latitude.toDouble(), longitude.toDouble(), timestamp)
         }
     }
 
@@ -138,34 +158,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             "title",
             "description"
         )
-    }
-
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        getCurrentLocation(googleMap)
-        addMarkers()
-
-    }
-
-    private fun addMarkers() {
-        val cursor = databaseHelper.readAllData()
-        if (cursor != null)
-        {
-            while (cursor.moveToNext()) {
-                val _id = cursor.getInt(0);
-                val path = cursor.getString(1);
-                val loc1 = cursor.getDouble(2);
-                val loc2 = cursor.getDouble(3);
-                val timestamp = cursor.getLong(4);
-
-                Log.d("DB", _id.toString() + path + loc1 + loc2 +timestamp)
-
-                val latLng = LatLng(loc1, loc2) // Convert to a LatLng object
-                val markerOptions = MarkerOptions().position(latLng) // Create marker options with the LatLng object
-                mMap?.addMarker(markerOptions) // Add the marker to the map
-
-            }
-        }
     }
 
     private fun getCurrentLocation(googleMap: GoogleMap) {
@@ -196,5 +188,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val REQUEST_IMAGE_CAPTURE = 1
         private val REQUEST_CAMERA_PERMISSION = 1
         }
+
+
 }
 

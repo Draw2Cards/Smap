@@ -32,12 +32,11 @@ class Gallery : AppCompatActivity() {
             while (cursor.moveToNext()) {
                 val _id = cursor.getInt(0);
                 val path = cursor.getString(1);
-                val loc1 = cursor.getFloat(2);
-                val loc2 = cursor.getFloat(3);
-                val timestamp = cursor.getLong(4);
+                val timestamp = cursor.getLong(2);
+                val loc_id = cursor.getInt(3);
 
                 images.add(path)
-                Log.d("DB", "($_id;$path;$loc1;$loc2;$timestamp)")
+                Log.d("DB", "($_id;$path;$timestamp;$loc_id)")
             }
         }
         imageAdapter = ImageAdapter(recyclerView.context, images, recyclerView, false) { isChecked ->
