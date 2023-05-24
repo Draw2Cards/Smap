@@ -4,4 +4,6 @@
     <string name="from">From:</string>
     <string name="to">To:</string>
     <string name="share">Share</string>
+    <string name="check_all">Check all</string>
+    <string name="uncheck_all">Uncheck all</string>
 </resources>

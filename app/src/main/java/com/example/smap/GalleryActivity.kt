@@ -27,6 +27,7 @@ class GalleryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_gallery)
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
+        toolbar.title = "Gallery"
         setSupportActionBar(toolbar)
 
         recyclerView = findViewById(R.id.recyclerView)
@@ -117,10 +118,34 @@ class GalleryActivity : AppCompatActivity() {
         return true
     }
 
+    private fun checkAll() {
+        for (i in 0 until recyclerView.childCount) {
+            val view = recyclerView.getChildAt(i)
+            val checkbox = view.findViewById<CheckBox>(R.id.checkBox)
+            checkbox.isChecked = true
+        }
+    }
+
+    private fun uncheckAll() {
+        for (i in 0 until recyclerView.childCount) {
+            val view = recyclerView.getChildAt(i)
+            val checkbox = view.findViewById<CheckBox>(R.id.checkBox)
+            checkbox.isChecked = false
+        }
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_share -> {
                 shareImages()
+                true
+            }
+            R.id.action_check_all -> {
+                checkAll()
+                true
+            }
+            R.id.action_uncheck_all -> {
+                uncheckAll()
                 true
             }
             else -> super.onOptionsItemSelected(item)
