@@ -58,7 +58,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         supportActionBar?.hide()
         drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -149,11 +148,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         return dateFormat.format(calendar.time)
     }
 
-    private fun openFilterActivity() {
-        val intent = Intent(this, FilterActivity::class.java)
-        startActivityForResult(intent, FILTER_REQUEST_CODE)
-    }
-
     override fun onMapReady(googleMap: GoogleMap) {
         drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         mMap = googleMap
@@ -164,7 +158,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun setUpClusterManager(mMap: GoogleMap) {
         val clusterManager = ClusterManager<ClusterMarkerItem>(this, mMap)
 
-        // Set up the ClusterManager as the renderer for the GoogleMap
         mMap.setOnCameraIdleListener(clusterManager)
         mMap.setOnMarkerClickListener(clusterManager)
 
@@ -269,10 +262,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun addMarkerToCurrentLocation() {
-        val location = mMap?.myLocation ?: return // Get the current location from the map
-        val latLng = LatLng(location.latitude, location.longitude) // Convert to a LatLng object
-        val markerOptions = MarkerOptions().position(latLng) // Create marker options with the LatLng object
-        mMap?.addMarker(markerOptions) // Add the marker to the map
+        val location = mMap?.myLocation ?: return
+        val latLng = LatLng(location.latitude, location.longitude)
+        val markerOptions = MarkerOptions().position(latLng)
+        mMap?.addMarker(markerOptions)
     }
 
     private fun saveImageToGallery(bitmap: Bitmap): String? {
@@ -285,7 +278,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun getCurrentLocation(googleMap: GoogleMap) {
-        // Get the user's current location and add a marker to the map
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION

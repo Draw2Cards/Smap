@@ -62,17 +62,13 @@ class ImageAdapter(
         holder.checkBox.visibility = if (isLongPressDetected) View.VISIBLE else View.INVISIBLE
 
         val imagePath = imagePaths[position]
-        // Load the image from the file path using a library like Glide or Picasso
-        // Example using Glide:
         Glide.with(holder.itemView)
             .load(imagePath)
             .into(imageView)
     }
 
     private fun updateCheckboxVisibility() {
-        var checkedItemCount = 0 // Counter for checked items
-
-        // Count the number of checked items
+        var checkedItemCount = 0
         for (i in 0 until recyclerView.childCount) {
             val child = recyclerView.getChildAt(i)
             val viewHolder = recyclerView.getChildViewHolder(child) as ViewHolder
@@ -84,7 +80,6 @@ class ImageAdapter(
             toolbar?.show()
         }
 
-        // If there was only one checked item and it is now unchecked, hide all checkboxes
         if (checkedItemCount == 0) {
             for (i in 0 until recyclerView.childCount) {
                 val child = recyclerView.getChildAt(i)

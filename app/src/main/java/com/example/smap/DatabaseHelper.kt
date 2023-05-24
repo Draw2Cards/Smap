@@ -28,14 +28,12 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        // Create the location table
         val createLocationTable = "CREATE TABLE IF NOT EXISTS $TABLE_LOCATION (" +
                 "$COLUMN_LOCATION_ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "$COLUMN_LOCATION_LATITUDE REAL, " +
                 "$COLUMN_LOCATION_LONGITUDE REAL" +
                 ")"
 
-        // Create the images table
         val createImagesTable = "CREATE TABLE IF NOT EXISTS $TABLE_IMAGES (" +
                 "$COLUMN_IMAGE_ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "$COLUMN_IMAGE_PATH TEXT, " +
@@ -57,22 +55,18 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun addMemory(imagePath: String, latitude: Double, longitude: Double, timestamp: Long): Long {
         val db = this.writableDatabase
 
-        // Check if the location already exists
         val locationId = getLocationId(db, latitude, longitude)
 
-        // If the location doesn't exist, add it to the location table
         if (locationId == null) {
             val locationValues = ContentValues()
             locationValues.put(COLUMN_LOCATION_LATITUDE, latitude)
             locationValues.put(COLUMN_LOCATION_LONGITUDE, longitude)
             val newLocationId = db.insert(TABLE_LOCATION, null, locationValues)
 
-            // Use the newly created location ID
             insertImage(db, imagePath, timestamp, newLocationId)
             db.close()
             return newLocationId
         } else {
-            // Use the existing location ID
             insertImage(db, imagePath, timestamp, locationId)
             db.close()
             return locationId
@@ -117,7 +111,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun findImagesByLocation(latitude: DoubleArray, longitude: DoubleArray): Cursor? {
         val db = this.readableDatabase
 
-        // Find the location IDs based on the latitude and longitude
         val locationIds = mutableListOf<Long>()
         for (i in latitude.indices) {
             val latitudeValue = latitude[i]
@@ -136,7 +129,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
 
         if (locationIds.isNotEmpty()) {
-            // Retrieve the images associated with the location IDs
             val locationIdsString = locationIds.joinToString()
             val imagesQuery = "SELECT * FROM $TABLE_IMAGES WHERE $COLUMN_IMAGE_LOCATION_ID IN ($locationIdsString)"
             return db.rawQuery(imagesQuery, null)
@@ -164,13 +156,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun getFilteredLocations(from: Long, to: Long): Cursor? {
         val db = this.readableDatabase
 
-        // Find the images within the given date range
         val imagesQuery = "SELECT $COLUMN_IMAGE_LOCATION_ID FROM $TABLE_IMAGES WHERE $COLUMN_IMAGE_TIMESTAMP BETWEEN $from AND $to"
         val imageCursor = db.rawQuery(imagesQuery, null)
 
         val locationIds = mutableListOf<Long>()
         if (imageCursor != null && imageCursor.moveToFirst()) {
-            // Retrieve the location IDs associated with the filtered images
             do {
                 val locationId = imageCursor.getLong(0)
                 locationIds.add(locationId)
@@ -180,13 +170,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
 
         if (locationIds.isNotEmpty()) {
-            // Filter the locations based on the retrieved location IDs
             val locationIdsStr = locationIds.joinToString(",")
             val locationsQuery = "SELECT * FROM $TABLE_LOCATION WHERE $COLUMN_LOCATION_ID IN ($locationIdsStr)"
             return db.rawQuery(locationsQuery, null)
         }
 
-        // Return all locations if no images were found within the date range
         return db.rawQuery("SELECT * FROM $TABLE_LOCATION", null)
     }
 

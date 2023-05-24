@@ -59,14 +59,11 @@ class GalleryActivity : AppCompatActivity() {
         }
 
         imageAdapter = ImageAdapter(recyclerView.context, images, recyclerView, false) { isChecked ->
-            // This lambda function is called when a checkbox is checked/unchecked
             isLongPressDetected = isChecked
             updateCheckboxVisibility()
         }
 
         imageAdapter.setOnCheckboxCheckedListener { isChecked ->
-            // Update your UI based on the checkbox state
-            // For example, enable/disable a "Delete" button
         }
 
         recyclerView.adapter = imageAdapter
@@ -88,7 +85,6 @@ class GalleryActivity : AppCompatActivity() {
             type = "image/*"
             putExtra(Intent.EXTRA_SUBJECT, "Shared Images")
             putExtra(Intent.EXTRA_TEXT, "Check out these images!")
-            // Add the checked image paths as Uri to the Intent
             val imageUris: ArrayList<Uri> = ArrayList()
             for (i in 0 until recyclerView.childCount) {
                 val view = recyclerView.getChildAt(i)
@@ -102,12 +98,9 @@ class GalleryActivity : AppCompatActivity() {
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, imageUris)
         }
 
-        // Verify if there are any apps available to handle the intent
         if (intent.resolveActivity(packageManager) != null) {
-            // Start the chooser dialog
             startActivity(Intent.createChooser(intent, "Share images"))
         } else {
-            // Handle case where no apps can handle the intent
             Toast.makeText(this, "No app available to share images", Toast.LENGTH_SHORT).show()
         }
     }
