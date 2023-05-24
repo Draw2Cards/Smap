@@ -45,7 +45,7 @@
             android:exported="false"
             android:label="Filter Activity"/>
         <activity
-            android:name=".Gallery"
+            android:name=".GalleryActivity"
             android:exported="false" />
         <!--
              TODO: Before you run your application, you need a Google Maps API key.

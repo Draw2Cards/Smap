@@ -37,7 +37,7 @@ class FilterActivity : AppCompatActivity() {
         galleryButton.setOnClickListener {
             Log.d("FilterActivity", "Selected 'to' value: $to")
             Log.d("FilterActivity", "Selected 'from' value: $from")
-            val intent = Intent(this, Gallery::class.java)
+            val intent = Intent(this, GalleryActivity::class.java)
             intent.putExtra("to", to)
             intent.putExtra("from", from)
             startActivity(intent)

@@ -91,7 +91,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             latitudeArray[0] = markerLocation.latitude
             longitudeArray[0] = markerLocation.longitude
 
-            val intent = Intent(this, Gallery::class.java)
+            val intent = Intent(this, GalleryActivity::class.java)
             intent.putExtra("latitudeArray", latitudeArray)
             intent.putExtra("longitudeArray", longitudeArray)
 
@@ -109,7 +109,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 longitudeArray[index] = markerLocation.longitude
             }
 
-            val intent = Intent(this, Gallery::class.java)
+            val intent = Intent(this, GalleryActivity::class.java)
             intent.putExtra("latitudeArray", latitudeArray)
             intent.putExtra("longitudeArray", longitudeArray)
 

@@ -1,28 +1,38 @@
 package com.example.smap
 
 import ImageAdapter
+import android.content.Intent
 import android.database.Cursor
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.CheckBox
+import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-class Gallery : AppCompatActivity() {
+class GalleryActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private var isLongPressDetected = false
     private lateinit var imageAdapter: ImageAdapter
-
+    private val images = mutableListOf<String>()
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme) // Apply the theme before super.onCreate
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gallery)
+
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 3)
 
-        val images = mutableListOf<String>()
+
         val databaseHelper = DatabaseHelper(this)
 
         val latitude = intent.getDoubleArrayExtra("latitudeArray") ?: doubleArrayOf()
@@ -73,4 +83,47 @@ class Gallery : AppCompatActivity() {
         }
     }
 
+    private fun shareImages() {
+        val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+            type = "image/*"
+            putExtra(Intent.EXTRA_SUBJECT, "Shared Images")
+            putExtra(Intent.EXTRA_TEXT, "Check out these images!")
+            // Add the checked image paths as Uri to the Intent
+            val imageUris: ArrayList<Uri> = ArrayList()
+            for (i in 0 until recyclerView.childCount) {
+                val view = recyclerView.getChildAt(i)
+                val checkbox = view.findViewById<CheckBox>(R.id.checkBox)
+                if (checkbox.isChecked) {
+                    val image = images[i]
+                    val uri = Uri.parse(image)
+                    imageUris.add(uri)
+                }
+            }
+            putParcelableArrayListExtra(Intent.EXTRA_STREAM, imageUris)
+        }
+
+        // Verify if there are any apps available to handle the intent
+        if (intent.resolveActivity(packageManager) != null) {
+            // Start the chooser dialog
+            startActivity(Intent.createChooser(intent, "Share images"))
+        } else {
+            // Handle case where no apps can handle the intent
+            Toast.makeText(this, "No app available to share images", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_gallery, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_share -> {
+                shareImages()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 }
