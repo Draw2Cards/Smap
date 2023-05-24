@@ -296,8 +296,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     val currentLatLng = LatLng(location.latitude, location.longitude)
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng))
-                    googleMap.animateCamera(CameraUpdateFactory.zoomTo(15f))
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 10f))
                 }
             }
         } else {
