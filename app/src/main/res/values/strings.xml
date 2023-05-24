@@ -7,4 +7,7 @@
     <string name="check_all">Check all</string>
     <string name="uncheck_all">Uncheck all</string>
     <string name="filter">Filter</string>
+    <string name="camera">Camera</string>
+    <string name="map_button">OK</string>
+    <string name="show_gallery">Show gallery</string>
 </resources>

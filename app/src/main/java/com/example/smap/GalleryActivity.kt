@@ -22,12 +22,11 @@ class GalleryActivity : AppCompatActivity() {
     private lateinit var imageAdapter: ImageAdapter
     private val images = mutableListOf<String>()
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.AppTheme) // Apply the theme before super.onCreate
+        setTheme(R.style.MyTheme)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gallery)
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
-        toolbar.title = "Gallery"
         setSupportActionBar(toolbar)
 
         recyclerView = findViewById(R.id.recyclerView)

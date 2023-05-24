@@ -51,23 +51,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     @SuppressLint("PotentialBehaviorOverride")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         databaseHelper = DatabaseHelper(this)
-
+        supportActionBar?.hide()
+        drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
-        val fabLocation = findViewById<FloatingActionButton>(R.id.fab_location)
-        fabLocation.setOnClickListener {
-            getCurrentLocation(mMap)
-        }
 
         val fabCamera = findViewById<FloatingActionButton>(R.id.fab_camera)
         fabCamera.setOnClickListener {
