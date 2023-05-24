@@ -11,9 +11,15 @@ import android.app.Activity
 import android.content.Intent
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.icu.text.SimpleDateFormat
+import android.icu.util.Calendar
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -23,8 +29,11 @@ import com.google.android.gms.maps.model.LatLng
 import com.example.smap.databinding.ActivityMapsBinding
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.clustering.ClusterManager
+import java.util.*
+import kotlin.collections.ArrayList
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -33,10 +42,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var markersList: ArrayList<ClusterMarkerItem>
     private lateinit var mapFragment: SupportMapFragment
+    private lateinit var selectedDateToTextView: TextView
+    private lateinit var selectedDateFromTextView: TextView
+    private var to: Long = 0
+    private var from: Long = 0
+    private lateinit var drawerLayout: DrawerLayout
 
     @SuppressLint("PotentialBehaviorOverride")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -61,8 +76,83 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val fabFilter = findViewById<FloatingActionButton>(R.id.fab_filter)
         fabFilter.setOnClickListener {
-            openFilterActivity()
+            drawerLayout.openDrawer(GravityCompat.START)
         }
+
+        selectedDateToTextView = findViewById(R.id.textTo)
+        selectedDateToTextView.setOnClickListener {
+            showDatePicker(selectedDateToTextView, R.string.to)
+        }
+
+        selectedDateFromTextView = findViewById(R.id.textFrom)
+        selectedDateFromTextView.setOnClickListener {
+            showDatePicker(selectedDateFromTextView, R.string.from)
+        }
+
+        val galleryButton: Button = findViewById(R.id.galleryButton)
+        galleryButton.setOnClickListener {
+            Log.d("FilterActivity", "Selected 'to' value: $to")
+            Log.d("FilterActivity", "Selected 'from' value: $from")
+            val intent = Intent(this, GalleryActivity::class.java)
+            intent.putExtra("to", to)
+            intent.putExtra("from", from)
+            startActivity(intent)
+        }
+
+
+        val mapButton: Button = findViewById(R.id.mapButton)
+        mapButton.setOnClickListener {
+            // Print the selected "to" and "from" values to the log
+            Log.d("FilterActivity", "Selected 'to' value: $to")
+            Log.d("FilterActivity", "Selected 'from' value: $from")
+            filterMap();
+        }
+    }
+
+    private fun filterMap() {
+        mMap?.clear()
+        setUpClusterManager(mMap)
+        drawerLayout.closeDrawer(GravityCompat.START)
+    }
+
+    private fun showDatePicker(textView: TextView, text: Int) {
+        val calendar = Calendar.getInstance()
+        val datePicker = MaterialDatePicker.Builder.datePicker()
+            .setTitleText("Select Date")
+            .setSelection(calendar.timeInMillis)
+            .build()
+
+        datePicker.addOnPositiveButtonClickListener { selectedDate ->
+            val selectedTimestamp = selectedDate as Long
+            when (textView) {
+                selectedDateToTextView -> {
+                    val calendar = Calendar.getInstance()
+                    calendar.timeInMillis = selectedTimestamp
+                    // Set the time to 23:59
+                    calendar.set(Calendar.HOUR_OF_DAY, 23)
+                    calendar.set(Calendar.MINUTE, 59)
+                    calendar.set(Calendar.SECOND, 0)
+                    calendar.set(Calendar.MILLISECOND, 0)
+                    to = calendar.timeInMillis
+                    val selectedDateText = formatDate(to, true)
+                    textView.text = getString(text) + " " + selectedDateText
+                }
+                selectedDateFromTextView -> {
+                    from = selectedTimestamp
+                    val selectedDateText = formatDate(selectedTimestamp)
+                    textView.text = getString(text) + " " + selectedDateText
+                }
+            }
+        }
+
+        datePicker.show(supportFragmentManager, "DatePicker")
+    }
+
+    private fun formatDate(timestamp: Long, isEndOfDay: Boolean = false): String {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timestamp
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return dateFormat.format(calendar.time)
     }
 
     private fun openFilterActivity() {
@@ -71,6 +161,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
+        drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         mMap = googleMap
         setUpClusterManager(mMap)
         getCurrentLocation(googleMap)
@@ -124,9 +215,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun getAllItem(): ArrayList<ClusterMarkerItem> {
         val arrayList: ArrayList<ClusterMarkerItem> = ArrayList()
-
-        val from = intent.getLongExtra("from", 0L)
-        val to = intent.getLongExtra("to", 0L)
 
         val cursor: Cursor? = if (from == 0L) {
             databaseHelper.readAllData()
